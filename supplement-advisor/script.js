@@ -272,6 +272,26 @@ const conditionAliases = {
   edema: ['부종', '하체 부종', '붓기']
 };
 
+// 사용자가 입력한 목표 항목/키워드가 어떤 성분군과 직접 연결되는지 매칭
+const targetAliases = {
+  'vitamin-d': ['vitamin d', '비타민 d', 'd3', 'k2'],
+  'omega3': ['오메가3', '오메가-3', 'omega3', 'epa', 'dha', '피쉬오일'],
+  'magnesium': ['마그네슘', 'magnesium'],
+  'probiotic': ['유산균', 'probiotic', '프로바이오틱'],
+  'vit-b12': ['비타민 b12', 'b12', '메틸코발라민', 'b군'],
+  'vit-c': ['비타민 c', 'vitamin c', '아스코르브산'],
+  'zinc': ['아연', 'zinc'],
+  'creatine': ['크레아틴', 'creatine'],
+  nmn: ['nmn', 'nicotinamide mononucleotide'],
+  resveratrol: ['레스베라트롤', 'resveratrol'],
+  theanine: ['테아닌', 'theanine', 'l-테아닌'],
+  'sleep': ['수면', '불면', '숙면'],
+  'brain': ['뇌', '인지', '기억', '집중', '역노화', 'anti aging', '항노화'],
+  skin: ['피부', '재생', '피부회복'],
+  edema: ['부종', '붓기', '종아리 부종', '하지부종'],
+  uterus: ['자궁', '자궁건강', '월경', '생리'],
+};
+
 function normalizeList(text) {
   return (text || '')
     .toLowerCase()
@@ -284,9 +304,39 @@ function findConflicts(inputArr, aliasMap) {
   const flat = new Set(inputArr);
   const keys = [];
   Object.entries(aliasMap).forEach(([key, arr]) => {
-    if (arr.some(a => flat.has(a.toLowerCase()))) keys.push(key);
+    if (arr.some((a) => flat.has(a.toLowerCase()))) keys.push(key);
   });
   return keys;
+}
+
+function findTargets(inputArr, aliasMap) {
+  const flat = new Set(inputArr);
+  const matched = [];
+  const unknown = [];
+
+  const matchedSet = new Set();
+  Object.entries(aliasMap).forEach(([key, arr]) => {
+    if (arr.some((a) => flat.has(a.toLowerCase()))) {
+      if (!matchedSet.has(key)) {
+        matched.push(key);
+        matchedSet.add(key);
+      }
+    }
+  });
+
+  inputArr.forEach((raw) => {
+    let covered = false;
+    Object.entries(aliasMap).some(([key, arr]) => {
+      if (arr.includes(raw)) {
+        covered = true;
+        return true;
+      }
+      return false;
+    });
+    if (!covered) unknown.push(raw);
+  });
+
+  return { matched, unknown };
 }
 
 function isConflict(item, medFlags, condFlags) {
@@ -310,7 +360,7 @@ function goalFit(item, goal, occupation, age) {
   return true;
 }
 
-function relevanceScore(item, profile) {
+function relevanceScore(item, profile, targetIds) {
   let s = item.scoreBase;
   if (!goalFit(item, profile.goal, profile.occupation, profile.age)) return -999;
   if (profile.age >= 50) s += 1;
@@ -320,6 +370,16 @@ function relevanceScore(item, profile) {
   if (profile.goal === 'focus' && item.id === 'vit-b12') s += 1;
   if (profile.goal === 'brain' && ['magnesium', 'omega3', 'vitamin-d'].includes(item.id)) s += 1;
   if (profile.gender === 'female' && ['omega3', 'magnesium', 'vitamin-d'].includes(item.id)) s += 0.4;
+
+  // 사용자가 특정 성분/이슈를 넣으면 해당 항목 스코어 가산
+  if (targetIds.includes(item.id)) s += 1.5;
+
+  // 공통 키워드 기반 가산
+  if (targetIds.includes('sleep') && item.id === 'magnesium') s += 0.8;
+  if (targetIds.includes('brain') && ['omega3', 'magnesium', 'vitamin-d', 'vit-b12'].includes(item.id)) s += 0.6;
+  if (targetIds.includes('skin') && ['vitamin-d', 'omega3', 'vit-c', 'zinc'].includes(item.id)) s += 0.6;
+  if (targetIds.includes('edema') && ['magnesium', 'omega3', 'probiotic'].includes(item.id)) s += 0.4;
+
   return s;
 }
 
@@ -465,6 +525,11 @@ function renderProtocol(profile, candidateDetails, warnings, medFlags, condFlags
 
   const timelineRows = timeline.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
 
+  const specialNotes = [];
+  if (targetFlags.includes('nmn')) specialNotes.push('요청하신 NMN는 직접 데이터 항목이 없어서, 유사 성능/목적의 후보(항산화·대사/회복 성향)로 오메가-3, 비타민 D, 마그네슘 조합을 우선 제시합니다.');
+  if (targetFlags.includes('resveratrol')) specialNotes.push('요청하신 레스베라트롤은 현재 항목 DB에 직접 수치가 없어, 항산화/피부 회복 관점에서는 비타민 C, 오메가-3, 아연 중심으로 대체 제안합니다.');
+  if (targetFlags.includes('theanine')) specialNotes.push('요청하신 테아닌은 수면/긴장 완화 목적이므로 밤 루틴에서 카페인·블루라이트 관리, 호흡 루틴을 우선 강화하고, 마그네슘 200mg 미만으로 시작을 권장합니다.');
+
   const specialEdema = profile.gender === 'female'
     ? '<li>하체 부종: 90분마다 5분 기립 및 발목 펌프, 긴 바지/압박스타킹 대신 체액 순환 우선(혈액순환 문제 동반 시 의료평가)</li><li>자궁 건강: 갑작스런 월경량 변화·비정상 통증·두통이 반복되면 산부인과 선별</li>'
     : '<li>하체 부종: 염분 분산(한 번에 많은 나트륨 피함), 하체 순환 루틴 주기화</li>';
@@ -492,7 +557,7 @@ function renderProtocol(profile, candidateDetails, warnings, medFlags, condFlags
 
     <div class="report-block">
       <h3>Special Solution</h3>
-      <ul>${specialEdema}</ul>
+      <ul>${specialEdema}${specialNotes.length ? '<li>' + specialNotes.join('</li><li>') + '</li>' : ''}</ul>
     </div>
 
     <div class="report-block">
@@ -531,10 +596,15 @@ function onSubmit(e) {
 
   const medFlags = findConflicts(profile.meds, medAliases);
   const condFlags = findConflicts(profile.conditions, conditionAliases);
-  const targetFlags = findConflicts(profile.targets, medAliases);
+  const targetMatch = findTargets(profile.targets, targetAliases);
+  const targetFlags = targetMatch.matched;
 
   const candidateDetails = [];
   const warnings = [];
+
+  if (!targetMatch.matched.length && profile.targets.length > 0) {
+    warnings.push(`요청 항목 중 직접 매칭된 영양제가 적습니다: ${targetMatch.unknown.join(', ')}. 이 경우는 하단 '역노화/습관' 조언을 참고해 대체군으로 추천합니다.`);
+  }
 
   supplements.forEach((item) => {
     if (!isInputAllowed(item, profile.allergies)) {
@@ -542,7 +612,7 @@ function onSubmit(e) {
       return;
     }
 
-    const score = relevanceScore(item, profile);
+    const score = relevanceScore(item, profile, targetFlags);
     if (score < 0) return;
 
     const conf = isConflict(item, medFlags, condFlags);
