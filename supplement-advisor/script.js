@@ -292,6 +292,20 @@ const targetAliases = {
   uterus: ['자궁', '자궁건강', '월경', '생리'],
 };
 
+const explicitSupplementAliases = {
+  'vitamin-d': ['비타민d', '비타민 d', 'vitd', 'vit d', 'd3', 'k2', '비타민d3'],
+  'omega3': ['오메가3', '오메가-3', '오메가', 'omega3', '피쉬오일', 'epa', 'dha'],
+  'magnesium': ['마그네슘', 'mg'],
+  'probiotic': ['유산균', '프로바이오틱', 'probiotic'],
+  'vit-b12': ['b12', '비타민b12', '비타민 b12', '메틸코발아민'],
+  'vit-c': ['비타민c', '비타민 c', 'vc', '아스코르브산'],
+  'zinc': ['아연', 'zinc'],
+  'creatine': ['크레아틴', 'creatine'],
+  nmn: ['nmn', '니코틴아마이드 모노뉴클레오타이드'],
+  resveratrol: ['레스베라트롤', 'resveratrol'],
+  theanine: ['테아닌', 'theanine', 'l-테아닌'],
+};
+
 function normalizeList(text) {
   return (text || '')
     .toLowerCase()
@@ -337,6 +351,25 @@ function findTargets(inputArr, aliasMap) {
   });
 
   return { matched, unknown };
+}
+
+function findExplicitSupplementTargets(inputArr) {
+  const flat = new Set(inputArr);
+  const matched = [];
+  const unknown = [];
+
+  Object.entries(explicitSupplementAliases).forEach(([id, words]) => {
+    if (words.some((w) => flat.has(w.toLowerCase()))) {
+      matched.push(id);
+    }
+  });
+
+  inputArr.forEach((raw) => {
+    const isKnown = Object.values(explicitSupplementAliases).some((arr) => arr.includes(raw));
+    if (!isKnown && raw) unknown.push(raw);
+  });
+
+  return { matched: [...new Set(matched)], unknown };
 }
 
 function isConflict(item, medFlags, condFlags) {
@@ -737,10 +770,15 @@ function onSubmit(e) {
   const medFlags = findConflicts(profile.meds, medAliases);
   const condFlags = findConflicts(profile.conditions, conditionAliases);
   const targetMatch = findTargets(profile.targets, targetAliases);
-  const targetFlags = targetMatch.matched;
+  const explicitMatch = findExplicitSupplementTargets(profile.targets);
+  const targetFlags = [...new Set([...targetMatch.matched, ...explicitMatch.matched])];
 
   const candidateDetails = [];
   const warnings = [];
+
+  if (explicitMatch.matched.length) {
+    warnings.push(`요청하신 영양제 키워드 중 다음 항목을 직접 반영해 우선순위를 높였습니다: ${explicitMatch.matched.join(', ')}.`);
+  }
 
   if (!targetMatch.matched.length && profile.targets.length > 0) {
     warnings.push(`요청 항목 중 직접 매칭된 영양제가 적습니다: ${targetMatch.unknown.join(', ')}. 이 경우는 하단 '역노화/습관' 조언을 참고해 대체군으로 추천합니다.`);
