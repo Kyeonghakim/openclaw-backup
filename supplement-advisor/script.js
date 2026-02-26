@@ -3,15 +3,15 @@ const supplements = [
     id: 'vitamin-d',
     name: '비타민 D3 + K2 (MK-7)',
     ingredients: ['Vitamin D3', 'Vitamin K2'],
-    purpose: '뼈 건강 유지, 면역 체계 지원(일반 보완용)',
-    targetGoals: ['general', 'immunity', 'focus'],
+    purpose: '뼈·면역·근육 대사 지원',
+    targetGoals: ['general', 'immunity', 'focus', 'skin', 'brain'],
     ageMin: 18,
     occupationFit: ['sedentary', 'active', 'shift', 'athlete'],
-    dose: 'D3 1000~2000 IU/일 + K2 50~120 μg/일 (제품 기준 라벨 우선)',
+    dose: 'D3 1000~2000 IU/일 + K2 50~120 μg/일(제품 라벨 기준)',
     scoreBase: 3,
     evidence: [
-      '비타민 D 결핍과 골밀도/근육 기능 관련 다수 임상 연구에서의 효능은 연령·기저상태에 따라 다름',
-      'K2는 칼슘 대사 조절에 대한 보조 근거가 축적되어 있어 병행 사용이 많은 가이드라인에서 다루어짐'
+      '비타민 D 결핍 집단에서 근육 기능/면역 지표 개선 근거 존재',
+      'K2는 뼈 대사와 칼슘 대사 조절에서 함께 고려되는 보조 영양소로 취급됨'
     ],
     contraindications: {
       medConflicts: ['warfarin', 'acenocoumarol', 'phenprocoumon'],
@@ -24,14 +24,8 @@ const supplements = [
         link: 'https://kr.iherb.com/search?kw=Vitamin%20D3%20K2%20MK-7'
       },
       alternatives: [
-        {
-          label: 'iHerb: Vitamin D3 2000 IU',
-          link: 'https://kr.iherb.com/search?kw=Vitamin%20D3%202000IU'
-        },
-        {
-          label: 'iHerb: Vitamin K2 MK-7 100mcg',
-          link: 'https://kr.iherb.com/search?kw=Vitamin%20K2%20MK-7%20100mcg'
-        }
+        { label: 'iHerb: Vitamin D3 2000 IU', link: 'https://kr.iherb.com/search?kw=Vitamin%20D3%202000IU' },
+        { label: 'iHerb: Vitamin K2 MK-7 100mcg', link: 'https://kr.iherb.com/search?kw=Vitamin%20K2%20MK-7%20100mcg' }
       ]
     }
   },
@@ -39,35 +33,29 @@ const supplements = [
     id: 'omega3',
     name: '오메가-3 (EPA/DHA)',
     ingredients: ['EPA', 'DHA'],
-    purpose: '심혈관 대사/염증 반응 보완 및 회복 지원(일반 용도)',
-    targetGoals: ['immunity', 'general', 'focus'],
+    purpose: '염증 조절 및 운동 회복, 피부 건강 보조',
+    targetGoals: ['immunity', 'general', 'focus', 'strength', 'skin'],
     ageMin: 18,
     occupationFit: ['sedentary', 'active', 'shift', 'athlete'],
     dose: 'EPA+DHA 합계 1000~2000mg/일, 식사와 함께',
     scoreBase: 4,
     evidence: [
-      '오메가-3는 중성지방 개선과 일부 심혈관 지표 개선 근거가 있으나, 용량·대상군별 효과 차이가 큼',
-      '임산부 및 항응고제 병용 시 출혈 위험/대량복용 주의 권고가 임상 문헌에서 반복됨'
+      '지질 지표 개선 근거가 있으며, 일부 연구에서 염증 완화 및 회복 지표 개선 보고',
+      '고용량/항응고 동반 시 출혈 위험 관련 모니터 필요'
     ],
     contraindications: {
       medConflicts: ['warfarin', 'clopidogrel', 'apixaban', 'rivaroxaban', 'dabigatran', 'aspirin'],
       conditionConflicts: ['bleeding_disorder']
     },
-    qualityFilters: ['분자량 정화/분해 잔류물 검사(중금속/산패물질)', '분자체/IFOS 등급 우선'],
+    qualityFilters: ['분자량 정화/산패물질 검사', '분자체/IFOS 등급 우선'],
     products: {
       primary: {
         label: 'iHerb: Omega-3 Fish Oil 1000mg',
         link: 'https://kr.iherb.com/search?kw=Omega-3%20Fish%20Oil%201000mg'
       },
       alternatives: [
-        {
-          label: 'iHerb: Omega-3 1800mg',
-          link: 'https://kr.iherb.com/search?kw=Omega-3%201800mg'
-        },
-        {
-          label: 'iHerb: Vegan Omega-3',
-          link: 'https://kr.iherb.com/search?kw=Vegan%20Omega-3'
-        }
+        { label: 'iHerb: Omega-3 1800mg', link: 'https://kr.iherb.com/search?kw=Omega-3%201800mg' },
+        { label: 'iHerb: Vegan Omega-3', link: 'https://kr.iherb.com/search?kw=Vegan%20Omega-3' }
       ]
     }
   },
@@ -76,34 +64,28 @@ const supplements = [
     name: '마그네슘 글리시네이트/트레오네이트',
     ingredients: ['Magnesium glycinate', 'Magnesium L-threonate'],
     purpose: '근육 긴장 완화, 수면/회복 보조',
-    targetGoals: ['sleep', 'strength', 'general'],
+    targetGoals: ['sleep', 'strength', 'general', 'focus', 'brain'],
     ageMin: 18,
-    occupationFit: ['active', 'athlete', 'shift'],
-    dose: '마그네슘 200~350mg/일(총량, 보충제+식이)',
+    occupationFit: ['active', 'athlete', 'shift', 'sedentary'],
+    dose: '마그네슘 200~350mg/일(총량 기준)',
     scoreBase: 5,
     evidence: [
-      '마그네슘은 결핍 위험군에서 근골격 불편감, 수면 질/회복 관련 보조근거 존재',
-      '제형별 흡수율 차이로 위장 부담이 적은 킬레이트형 제품이 일반적으로 선호됨'
+      '수면 질 저하 또는 근육 긴장 호전에 대한 임상 근거가 비교적 일관적으로 관찰됨',
+      '제형·용량 조절이 소화 편차에 영향을 줌'
     ],
     contraindications: {
       medConflicts: ['furosemide', 'laxative_mag', 'tetracycline', 'bisphosphonate'],
-      conditionConflicts: ['kidney_disease'],
+      conditionConflicts: ['kidney_disease']
     },
-    qualityFilters: ['무향미 무첨가 포맷 우선', '중금속/불순물 검사 정보 공개'],
+    qualityFilters: ['무향/부원료 단순형', '중금속 및 불순물 검사 공개'],
     products: {
       primary: {
         label: 'iHerb: Magnesium Glycinate',
         link: 'https://kr.iherb.com/search?kw=Magnesium%20Glycinate'
       },
       alternatives: [
-        {
-          label: 'iHerb: Magnesium L-Threonate',
-          link: 'https://kr.iherb.com/search?kw=Magnesium%20L-threonate'
-        },
-        {
-          label: 'iHerb: Magnesium Citrate',
-          link: 'https://kr.iherb.com/search?kw=Magnesium%20citrate'
-        }
+        { label: 'iHerb: Magnesium L-Threonate', link: 'https://kr.iherb.com/search?kw=Magnesium%20L-threonate' },
+        { label: 'iHerb: Magnesium Citrate', link: 'https://kr.iherb.com/search?kw=Magnesium%20citrate' }
       ]
     }
   },
@@ -111,35 +93,29 @@ const supplements = [
     id: 'probiotic',
     name: '프로바이오틱(균주명 투명표기)',
     ingredients: ['Lactobacillus', 'Bifidobacterium'],
-    purpose: '장내 환경 안정, 소화/면역 기반 보조',
-    targetGoals: ['immunity', 'sleep', 'general'],
+    purpose: '장-면역-피부 축의 안정화 보조',
+    targetGoals: ['immunity', 'sleep', 'general', 'skin', 'brain'],
     ageMin: 18,
     occupationFit: ['sedentary', 'active', 'shift', 'athlete'],
-    dose: '제품 라벨 CFU 기준 권장량 준수(예: 5-20B CFU/일)',
+    dose: '제품 라벨 CFU 기준(예: 5-20B CFU/일)',
     scoreBase: 2,
     evidence: [
-      '프로바이오틱은 균주/도징/개인 상태에 따른 반응 편차가 커서 균주 투명성이 중요',
-      '면역·소화 관련 지원 근거는 증상군별로 강도 차이 존재'
+      '개인 장내미생물 상태에 따라 반응 편차가 있어, 균주 투명성이 중요',
+      '소화/면역 보조 목적으로 임상적으로 자주 사용하는 범주'
     ],
     contraindications: {
       medConflicts: [],
-      conditionConflicts: ['immunosuppressed'],
+      conditionConflicts: ['immunosuppressed']
     },
-    qualityFilters: ['균주명 정량 표시', '제형/보관(냉장/실온) 명시', '실제 CFU 함량 표기'],
+    qualityFilters: ['균주명 정량표기', '냉장/실온 보관 명시'],
     products: {
       primary: {
         label: 'iHerb: Probiotic 10B CFU Lactobacillus',
         link: 'https://kr.iherb.com/search?kw=Probiotic%2010B%20CFU%20Lactobacillus'
       },
       alternatives: [
-        {
-          label: 'iHerb: Daily Probiotic 5B CFU',
-          link: 'https://kr.iherb.com/search?kw=Probiotic%205B%20CFU'
-        },
-        {
-          label: 'iHerb: Multi-strain Probiotic',
-          link: 'https://kr.iherb.com/search?kw=multi-strain%20probiotic'
-        }
+        { label: 'iHerb: Daily Probiotic 5B CFU', link: 'https://kr.iherb.com/search?kw=Probiotic%205B%20CFU' },
+        { label: 'iHerb: Multi-strain Probiotic', link: 'https://kr.iherb.com/search?kw=multi-strain%20probiotic' }
       ]
     }
   },
@@ -147,35 +123,29 @@ const supplements = [
     id: 'vit-b12',
     name: '비타민 B12 (메틸코발아민)',
     ingredients: ['Vitamin B12'],
-    purpose: '에너지 대사 보완(결핍 위험군 중심)',
-    targetGoals: ['focus', 'general', 'strength'],
+    purpose: '에너지 대사 및 신경계 보조',
+    targetGoals: ['focus', 'general', 'strength', 'brain'],
     ageMin: 18,
     occupationFit: ['sedentary', 'active', 'shift', 'athlete'],
-    dose: '25~500 μg/일(결핍 가능성 시 검증 기반 조절)',
+    dose: '25~500 μg/일(결핍 의심 시 혈액검사 기반 조절)',
     scoreBase: 3,
     evidence: [
-      '노년층/채식주의자/흡수저해 약물 복용군에서 결핍이 빈번해 검증 기반 보충 권고',
-      '대상군 분명히 분류한 경우에만 의학적으로 의미 있는 개선 효과 기대'
+      '흡수저해 상태/채식군에서 결핍 보충의 근거가 상대적으로 명확',
+      '일반 피로 호소에서 과잉 사용 시 과학적 이득은 제한적'
     ],
     contraindications: {
       medConflicts: ['chloramphenicol'],
       conditionConflicts: ['polycythemia']
     },
-    qualityFilters: ['메틸코발아민 또는 메티코발아민', '표준화된 1정당 함량 표기'],
+    qualityFilters: ['메틸코발아민 또는 메티코발아민', '정확 CFU/함량 표시(해당시)'],
     products: {
       primary: {
         label: 'iHerb: Methylcobalamin Vitamin B12',
         link: 'https://kr.iherb.com/search?kw=Methylcobalamin%20Vitamin%20B12'
       },
       alternatives: [
-        {
-          label: 'iHerb: Cyanocobalamin 500mcg',
-          link: 'https://kr.iherb.com/search?kw=Cyanocobalamin%20500mcg'
-        },
-        {
-          label: 'iHerb: Active B12',
-          link: 'https://kr.iherb.com/search?kw=Active%20B12'
-        }
+        { label: 'iHerb: Cyanocobalamin 500mcg', link: 'https://kr.iherb.com/search?kw=Cyanocobalamin%20500mcg' },
+        { label: 'iHerb: Active B12', link: 'https://kr.iherb.com/search?kw=Active%20B12' }
       ]
     }
   },
@@ -183,35 +153,89 @@ const supplements = [
     id: 'creatine',
     name: '크레아틴 모노하이드레이트',
     ingredients: ['Creatine monohydrate'],
-    purpose: '운동 수행, 근력 트레이닝 지속성 보완',
+    purpose: '운동 수행력 및 근거리 반복력 보완',
     targetGoals: ['strength', 'general'],
     ageMin: 18,
     occupationFit: ['athlete', 'active'],
     dose: '3~5g/일(1일 1회), 수분 충분',
-    scoreBase: 3,
+    scoreBase: 4,
     evidence: [
-      '근력 훈련 수행 능력 및 고강도 단기 수행에 대한 비교적 안정적 근거 축적',
-      '특정 신장질환·고질량단백질 제한 시 임상 모니터링 필요'
+      '고강도 근력 과학에서 반복력·회복 지표 개선 근거가 상대적으로 강함',
+      '개인 수분·신장 상태에 따라 모니터링 필요'
     ],
     contraindications: {
       medConflicts: ['nephrotoxic'],
       conditionConflicts: ['kidney_disease', 'dehydration_risk']
     },
-    qualityFilters: ['무미네랄 첨가', '순도(Creatine monohydrate 99.5%+)'],
+    qualityFilters: ['99.5%+ 순도 표기', '첨가물 최소화'],
     products: {
       primary: {
         label: 'iHerb: Micronized Creatine Monohydrate',
         link: 'https://kr.iherb.com/search?kw=Micronized%20Creatine%20Monohydrate'
       },
       alternatives: [
-        {
-          label: 'iHerb: Creatine Creapure',
-          link: 'https://kr.iherb.com/search?kw=Creatine%20Creapure'
-        },
-        {
-          label: 'iHerb: Creatine HCl',
-          link: 'https://kr.iherb.com/search?kw=Creatine%20HCl'
-        }
+        { label: 'iHerb: Creatine Creapure', link: 'https://kr.iherb.com/search?kw=Creatine%20Creapure' },
+        { label: 'iHerb: Creatine HCl', link: 'https://kr.iherb.com/search?kw=Creatine%20HCl' }
+      ]
+    }
+  },
+  {
+    id: 'vit-c',
+    name: '비타민 C',
+    ingredients: ['Vitamin C'],
+    purpose: '항산화, 피부/면역 보조',
+    targetGoals: ['skin', 'immunity', 'general'],
+    ageMin: 18,
+    occupationFit: ['sedentary', 'active', 'shift', 'athlete'],
+    dose: '250~1000 mg/일(나눠 복용 권장)',
+    scoreBase: 2,
+    evidence: [
+      '결핍 예방/보충 목적이 명확하며, 과잉 섭취는 위장 부담 가능',
+      '일반인군에서 고용량의 추가 이득은 개별적'
+    ],
+    contraindications: {
+      medConflicts: [],
+      conditionConflicts: ['kidney_stone_risk']
+    },
+    qualityFilters: ['순도/부원료 명시', '성분함량 라벨 정확'],
+    products: {
+      primary: {
+        label: 'iHerb: Vitamin C 500mg',
+        link: 'https://kr.iherb.com/search?kw=Vitamin%20C%20500mg'
+      },
+      alternatives: [
+        { label: 'iHerb: Ascorbic acid 1000mg', link: 'https://kr.iherb.com/search?kw=Vitamin%20C%201000mg' },
+        { label: 'iHerb: Buffered Vitamin C', link: 'https://kr.iherb.com/search?kw=buffered%20vitamin%20c' }
+      ]
+    }
+  },
+  {
+    id: 'zinc',
+    name: '아연',
+    ingredients: ['Zinc'],
+    purpose: '면역/피부/호르몬 대사 보조',
+    targetGoals: ['skin', 'immunity', 'focus', 'general'],
+    ageMin: 18,
+    occupationFit: ['sedentary', 'active', 'shift', 'athlete'],
+    dose: '8~15 mg/일(개인 결핍 확인 후 조절)',
+    scoreBase: 2,
+    evidence: [
+      '아연은 미량요소로 면역·피부 회복 관련 보조로 자주 사용',
+      '과량 복용 시 구리결핍, 메스꺼움 등의 부작용 우려'
+    ],
+    contraindications: {
+      medConflicts: [],
+      conditionConflicts: []
+    },
+    qualityFilters: ['아연 형태(피콜리네이트/글루콘산) 명시', '함량 일치'],
+    products: {
+      primary: {
+        label: 'iHerb: Zinc Picolinate',
+        link: 'https://kr.iherb.com/search?kw=Zinc%20picolinate'
+      },
+      alternatives: [
+        { label: 'iHerb: Zinc gluconate', link: 'https://kr.iherb.com/search?kw=Zinc%20gluconate' },
+        { label: 'iHerb: Zinc citrate', link: 'https://kr.iherb.com/search?kw=Zinc%20citrate' }
       ]
     }
   }
@@ -229,9 +253,12 @@ const medAliases = {
   furosemide: ['furosemide', '푸로세미드', '라식'],
   tetracycline: ['tetracycline', '테트라사이클린'],
   bisphosphonate: ['bisphosphonate', '알렌드로네이트', '리세드로네이트'],
-  nephrotoxic: ['aminoglycoside', 'aminoglucoside', 'colchicine', 'colchicine'],
-  immunosuppressed: ['immunosuppressant', '면역억제'],
-  chloramphenicol: ['chloramphenicol']
+  nephrotoxic: ['aminoglycoside', 'colchicine'],
+  immunosuppressant: ['면역억제', '항암'],
+  chloramphenicol: ['chloramphenicol'],
+  yaz: ['yaz', '야즈', '디트렌기', 'drospirenone', 'ethinyl estradiol'],
+  ssri: ['ssri', 'escitalopram', 'paroxetine', 'fluoxetine', 'sertraline', 'citalopram', '아큐클로', '프로작', '젤브트라'],
+  snii: ['수면', '졸피뎀', '에스조피클론', 'z-drug', 'xanax', 'lorazepam']
 };
 
 const conditionAliases = {
@@ -240,11 +267,13 @@ const conditionAliases = {
   bleeding_disorder: ['출혈', '혈우병', '항응고', '항응고제'],
   dehydration_risk: ['탈수', '설사', '발한 과다'],
   polycythemia: ['폴리', '적혈구', '고적혈구'],
-  immunosuppressed: ['면역억제', '항암', '항체치료', '조직이식', '면역저하']
+  immunosuppressed: ['면역억제', '항암', '항체치료', '조직이식', '면역저하'],
+  insomnia: ['불면', '수면장애', '잠못'],
+  edema: ['부종', '하체 부종', '붓기']
 };
 
 function normalizeList(text) {
-  return text
+  return (text || '')
     .toLowerCase()
     .split(',')
     .map(s => s.trim())
@@ -263,9 +292,15 @@ function findConflicts(inputArr, aliasMap) {
 function isConflict(item, medFlags, condFlags) {
   const meds = (item.contraindications.medConflicts || []).filter(Boolean);
   const conds = (item.contraindications.conditionConflicts || []).filter(Boolean);
-  const badMeds = meds.some(m => medFlags.includes(m));
-  const badConds = conds.some(c => condFlags.includes(c));
-  return { bad: badMeds || badConds, reasons: { meds: meds.filter(m=>medFlags.includes(m)), conds: conds.filter(c=>condFlags.includes(c)) } };
+  const badMeds = meds.some((m) => medFlags.includes(m));
+  const badConds = conds.some((c) => condFlags.includes(c));
+  return {
+    bad: badMeds || badConds,
+    reasons: {
+      meds: meds.filter((m) => medFlags.includes(m)),
+      conds: conds.filter((c) => condFlags.includes(c))
+    }
+  };
 }
 
 function goalFit(item, goal, occupation, age) {
@@ -275,20 +310,27 @@ function goalFit(item, goal, occupation, age) {
   return true;
 }
 
-function relevanceScore(item, { age, goal, occupation, weight }) {
+function relevanceScore(item, profile) {
   let s = item.scoreBase;
-  if (!goalFit(item, goal, occupation, age)) return -999;
-  if (age >= 50) s += 1;
-  if (weight > 90 && item.id === 'omega3') s += 1;
-  if (occupation === 'athlete' && ['creatine', 'magnesium'].includes(item.id)) s += 1;
-  if (goal === 'sleep' && item.id === 'magnesium') s += 2;
-  if (goal === 'focus' && item.id === 'vit-b12') s += 1;
+  if (!goalFit(item, profile.goal, profile.occupation, profile.age)) return -999;
+  if (profile.age >= 50) s += 1;
+  if (profile.weight > 90 && item.id === 'omega3') s += 1;
+  if (profile.occupation === 'athlete' && ['creatine', 'magnesium'].includes(item.id)) s += 1;
+  if (profile.goal === 'sleep' && item.id === 'magnesium') s += 2;
+  if (profile.goal === 'focus' && item.id === 'vit-b12') s += 1;
+  if (profile.goal === 'brain' && ['magnesium', 'omega3', 'vitamin-d'].includes(item.id)) s += 1;
+  if (profile.gender === 'female' && ['omega3', 'magnesium', 'vitamin-d'].includes(item.id)) s += 0.4;
   return s;
 }
 
-function formatEvidence(evArr) {
-  if (!evArr || evArr.length === 0) return '근거 데이터가 미비합니다.';
-  return evArr.map(e => `<li>${e}</li>`).join('');
+function formatList(arr) {
+  return arr.map((x) => `<li>${x}</li>`).join('');
+}
+
+function isInputAllowed(item, allergies) {
+  if (!allergies.length) return true;
+  const nameBlob = `${item.name} ${item.ingredients.join(' ')}`.toLowerCase();
+  return !allergies.some((a) => nameBlob.includes(a));
 }
 
 function renderWarnings(list) {
@@ -297,16 +339,21 @@ function renderWarnings(list) {
     w.innerHTML = '';
     return;
   }
-  w.innerHTML = `<div class="warning"><strong>복용 주의</strong><ul>${list.map(x => `<li>${x}</li>`).join('')}</ul></div>`;
+  w.innerHTML = `<div class="warning"><strong>복용 주의</strong><ul>${formatList(list)}</ul></div>`;
 }
 
-function renderResults(items) {
+function renderResultCards(items) {
   const container = document.getElementById('results');
+  const protocol = document.getElementById('protocol');
+  protocol.classList.add('hidden');
+
   if (!items.length) {
-    container.innerHTML = '<div class="item">현재 입력 조건에서 안전-우선 추천 후보가 적습니다. 증상·약물 정보를 추가로 확인 후 재추천됩니다.</div>';
+    container.innerHTML = '<div class="item">현재 입력 조건에서 안전-우선 추천 후보가 적습니다.</div>';
     return;
   }
-  container.innerHTML = items.map(item => `
+  container.innerHTML = items
+    .map(
+      (item) => `
     <div class="item" data-id="${item.id}">
       <h3>${item.name}</h3>
       <div class="meta">
@@ -314,19 +361,21 @@ function renderResults(items) {
         <span class="badge">안전성 점수: ${item.score.toFixed(1)}/10</span>
       </div>
       <div><strong>핵심 성분:</strong> ${item.ingredients.join(', ')}</div>
-      <div><strong>간단 요약:</strong> ${item.purpose}</div>
+      <div><strong>요약:</strong> ${item.purpose}</div>
       <button class="detail-btn" type="button" data-open="${item.id}">자세히 보기</button>
     </div>
-  `).join('');
+  `
+    )
+    .join('');
 }
 
 function openModal(itemId) {
-  const item = supplements.find(x => x.id === itemId);
+  const item = supplements.find((x) => x.id === itemId);
   if (!item) return;
   const modal = document.getElementById('detail-modal');
   const body = document.getElementById('modal-body');
   const alternativesHtml = (item.products.alternatives || [])
-    .map(p => `<li><a href="${p.link}" target="_blank" rel="noopener">${p.label}</a></li>`)
+    .map((p) => `<li><a href="${p.link}" target="_blank" rel="noopener">${p.label}</a></li>`)
     .join('');
 
   body.innerHTML = `
@@ -334,13 +383,11 @@ function openModal(itemId) {
       <div><strong>${item.name}</strong></div>
       <div class="meta" style="margin-top: 6px;"><span class="badge">권장량: ${item.dose}</span> <span class="badge">안전성 점수: ${item.score.toFixed(1)}/10</span></div>
       <div><strong>목적:</strong> ${item.purpose}</div>
-      <div><strong>근거/유의문:</strong><ul>${formatEvidence(item.evidence)}</ul></div>
-      <div><strong>품질 기준:</strong> <span>${item.qualityFilters.join(' · ')}</span></div>
+      <div><strong>근거:</strong><ul>${formatList(item.evidence)}</ul></div>
+      <div><strong>품질 기준:</strong> ${item.qualityFilters.join(' · ')}</div>
       <div><strong>우선 추천:</strong> <a href="${item.products.primary.link}" target="_blank" rel="noopener">${item.products.primary.label}</a></div>
-      <div><strong>재고 대체 추천:</strong>
-        <ul>${alternativesHtml}</ul>
-      </div>
-      <p class="small">※ iHerb 재고는 시기에 따라 변동될 수 있으니, 대체 항목을 함께 확인해 주세요.</p>
+      <div><strong>재고 대체:</strong><ul>${alternativesHtml}</ul></div>
+      <p class="small">※ iHerb 재고는 시기에 따라 변동될 수 있어 대체 항목 동시 확인 권장.</p>
     </div>
   `;
   modal.classList.add('active');
@@ -353,33 +400,149 @@ function closeModal() {
   modal.setAttribute('aria-hidden', 'true');
 }
 
+function protocolSafety(profile, medFlags, condFlags, targetFlags) {
+  const lines = [];
+  if (medFlags.includes('yaz')) lines.push('Yaz(디스크로에르/에티닐에스트라디올) 복용 시: 칼륨 과다 섭취나 전해질 불균형 가능성에 주의(고칼륨 식이/보충제 중첩 피함).');
+  if (medFlags.includes('ssri') || targetFlags.includes('ssri')) lines.push('정신과 약물/수면약 병용 가능성: 5-HTP, 고함량 아마도 세로토닌성 보조제는 피하고, L-테아닌/마그네슘은 낮은 용량부터 관찰 필요.');
+  if (condFlags.includes('bleeding_disorder')) lines.push('출혈 경향 질환/항응고 동반: 오메가-3, 생약·고함량 비타민 E 등은 의료진 검토 후 사용');
+  if (condFlags.includes('kidney_disease')) lines.push('신장질환 리스크: 마그네슘/크레아틴 사용은 용량 보수적 또는 중단 후 상담 권장.');
+  if (condFlags.includes('kidney_stone_risk')) lines.push('신장결석 위험: 비타민 D/오메가-3 고용량은 개인 상태와 검사 수치에 따라 조절 필요.');
+  if (condFlags.includes('edema')) lines.push('부종이 지속되면 의학적 검사(심부전/정맥류/갑상선/신장) 동시 점검이 우선입니다.');
+
+  if (!lines.length) lines.push('현재 입력 기준, 주요 고위험 충돌은 크지 않지만 모든 스택은 개인 내약성 확인 후 단계적 시작 권장.');
+  return lines;
+}
+
+function protocolStack(profile, items, medFlags) {
+  const selected = [];
+  const preferred = ['vitamin-d', 'magnesium', 'omega3', 'vit-b12', 'zinc', 'vit-c', 'probiotic', 'creatine'];
+  const addIf = (id) => {
+    const found = items.find((x) => x.id === id);
+    if (found) selected.push(found);
+  };
+
+  preferred.forEach(addIf);
+
+  const safety = {
+    avoid: [],
+    checkFirst: ['25(OH)D', 'CBC/혈색소', '전해질(Ca/K/Na/Mg)', '신장기능(eGFR)'],
+    add: []
+  };
+
+  // Yaz 사용자는 마그네슘·B군·Zn을 핵심으로 강조
+  if (medFlags.includes('yaz')) {
+    safety.add.push('야즈 복용군은 일반적으로 B군, 마그네슘, 아연 결핍 경향을 선별적으로 체크하면 부작용 예방에 유리함.');
+  }
+
+  return { selected: selected.slice(0, 6), safety };
+}
+
+function protocolTimeline(profile) {
+  const lateSleep = profile.sleepHours && profile.sleepHours < 7;
+  return [
+    ['기상', '물 400~600ml + 짧은 햇빛/가벼운 스트레칭', '수분-체액 리듬 정렬, 컨디션 기반 점검'],
+    ['아침 식사', '단백질 25~35g + 저GI 탄수화물 + 채소', '혈당 스파이크 억제, 작업 집중 준비'],
+    ['오전 업무', '50분마다 2~3분 기립/종아리 수축 20회', '하체 순환 지원 및 좌식 부종 완화'],
+    ['운동일(운동 30~60분 전)', '저당 간식 + 시트룰린/크레아틴(운동 목표 시)', '근력 지구력 및 혈류 개선'],
+    ['저녁', '자극성 낮은 식사 + 수분 분산', '회복/피부 합성/수면 유도'],
+    ['취침 60분 전', '블루라이트 차단 + 호흡 4-7-8 3세트 + 마그네슘', '심박 안정/글림파틱 정리 기반 수면 준비']
+  ];
+}
+
+function renderProtocol(profile, candidateDetails, warnings, medFlags, condFlags, targetFlags) {
+  const safetyLines = protocolSafety(profile, medFlags, condFlags, targetFlags);
+  const stackInfo = protocolStack(profile, candidateDetails, medFlags);
+  const timeline = protocolTimeline(profile);
+
+  const report = document.getElementById('protocol');
+  const results = document.getElementById('results');
+  results.innerHTML = '';
+  document.getElementById('protocol').classList.remove('hidden');
+
+  const stackRows = stackInfo.selected
+    .map((it) => `<li><strong>${it.name}</strong> · ${it.dose} · ${it.purpose}</li>`)
+    .join('');
+
+  const timelineRows = timeline.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+
+  const specialEdema = profile.gender === 'female'
+    ? '<li>하체 부종: 90분마다 5분 기립 및 발목 펌프, 긴 바지/압박스타킹 대신 체액 순환 우선(혈액순환 문제 동반 시 의료평가)</li><li>자궁 건강: 갑작스런 월경량 변화·비정상 통증·두통이 반복되면 산부인과 선별</li>'
+    : '<li>하체 부종: 염분 분산(한 번에 많은 나트륨 피함), 하체 순환 루틴 주기화</li>';
+
+  report.innerHTML = `
+    <div class="report-block">
+      <h3>Safety Report</h3>
+      <ul>${formatList(safetyLines)}</ul>
+    </div>
+
+    <div class="report-block">
+      <h3>Custom Stack</h3>
+      <ul>${stackRows || '<li>데이터가 부족해 우선 기본군에서 조정합니다.</li>'}</ul>
+      <div class="small">의사 권고 확인 우선 항목: ${stackInfo.safety.checkFirst.join(', ')}</div>
+      <div class="small">${stackInfo.safety.add.length ? stackInfo.safety.add.join(' · ') : '추가로 B군/마그네슘/아연 우선선별 테스트 병행 권장'}</div>
+    </div>
+
+    <div class="report-block">
+      <h3>Daily Timeline (24h)</h3>
+      <table>
+        <thead><tr><th>시간</th><th>행동</th><th>목적</th></tr></thead>
+        <tbody>${timelineRows}</tbody>
+      </table>
+    </div>
+
+    <div class="report-block">
+      <h3>Special Solution</h3>
+      <ul>${specialEdema}</ul>
+    </div>
+
+    <div class="report-block">
+      <h3>Final Advice</h3>
+      <p>가장 중요한 것은 스택 수보다 일관성입니다. 첫 주는 1~2개 성분만 시작하고, 불면·심박·기분 변화를 기록하세요. 이 앱은 경향성 추천이며, 최종 용량·병용은 검사 기반으로 조정해야 합니다.</p>
+    </div>
+
+    <div class="report-block">
+      <h3>주의 경고</h3>
+      <ul>${warnings.length ? formatList(warnings) : '<li>현재 상태에서는 중대한 충돌 신호 없음. 그러나 신규 약물/증상 변화 시 즉시 재평가.</li>'}</ul>
+    </div>
+  `;
+}
+
 function onSubmit(e) {
   e.preventDefault();
-  const age = Number(document.getElementById('age').value || 0);
-  const gender = document.getElementById('gender').value;
-  const weight = Number(document.getElementById('weight').value || 0);
-  const occupation = document.getElementById('occupation').value;
-  const goal = document.getElementById('goal').value;
-  const meds = normalizeList(document.getElementById('meds').value);
-  const conditions = normalizeList(document.getElementById('conditions').value);
+  const mode = document.querySelector('input[name="mode"]:checked')?.value || 'recommend';
+  const profile = {
+    age: Number(document.getElementById('age').value || 0),
+    gender: document.getElementById('gender').value,
+    weight: Number(document.getElementById('weight').value || 0),
+    occupation: document.getElementById('occupation').value,
+    goal: document.getElementById('goal').value,
+    sleepHours: Number(document.getElementById('sleepHours').value || 7.0),
+    activityLevel: document.getElementById('activityLevel').value,
+    meds: normalizeList(document.getElementById('meds').value),
+    conditions: normalizeList(document.getElementById('conditions').value),
+    targets: normalizeList(document.getElementById('targets').value),
+    allergies: normalizeList(document.getElementById('allergies').value)
+  };
 
-  if (!age || !gender || !weight) {
-    alert('나이, 성별, 체중은 필수 입력입니다.');
+  if (!profile.age || !profile.gender || !profile.weight) {
+    alert('나이, 성별, 체중은 필수입니다.');
     return;
   }
 
-  const medFlags = findConflicts(meds, medAliases);
-  const condFlags = findConflicts(conditions, conditionAliases);
+  const medFlags = findConflicts(profile.meds, medAliases);
+  const condFlags = findConflicts(profile.conditions, conditionAliases);
+  const targetFlags = findConflicts(profile.targets, medAliases);
 
   const candidateDetails = [];
   const warnings = [];
 
-  if (medFlags.includes('warfarin') || condFlags.includes('bleeding_disorder')) {
-    warnings.push('항응고/출혈 위험 약물/상태가 있어 고위험 조합(예: 오메가-3 고용량, 고함량 허브 혼합제) 제외 검토가 필요합니다.');
-  }
+  supplements.forEach((item) => {
+    if (!isInputAllowed(item, profile.allergies)) {
+      warnings.push(`${item.name}는 알레르기/제한 사유로 제외했습니다.`);
+      return;
+    }
 
-  supplements.forEach(item => {
-    const score = relevanceScore(item, { age, goal, occupation, weight });
+    const score = relevanceScore(item, profile);
     if (score < 0) return;
 
     const conf = isConflict(item, medFlags, condFlags);
@@ -391,14 +554,13 @@ function onSubmit(e) {
       return;
     }
 
-    // Additional guardrails
     if (item.id === 'vitamin-d' && condFlags.includes('kidney_stone_risk')) {
-      warnings.push('비타민 D는 칼슘 대사 질환/결석 위험이 있는 경우 의사 상담 필요.');
+      warnings.push('비타민 D/칼슘 대사 이슈: 결석 위험이 있으므로 의료진 확인 후 우선도 조정');
       return;
     }
 
     if (item.id === 'magnesium' && condFlags.includes('kidney_disease')) {
-      warnings.push('신장질환에서 마그네슘 보충은 의사 확인 필요.');
+      warnings.push('신장질환 동반 시 마그네슘은 고용량 중단 후 조정 권장');
       return;
     }
 
@@ -407,11 +569,19 @@ function onSubmit(e) {
   });
 
   candidateDetails.sort((a, b) => b.score - a.score);
-  const finalList = candidateDetails.slice(0, 4);
+  const finalList = candidateDetails.slice(0, 6);
 
-  document.getElementById('status').innerText = `${gender} · ${age}세 · ${weight}kg · ${occupation} 직업군 · 목표 ${goal}`;
+  document.getElementById('status').innerText = `${profile.gender} · ${profile.age}세 · ${profile.weight}kg · ${profile.occupation} 직군 · 목표 ${profile.goal}`;
   renderWarnings(warnings);
-  renderResults(finalList);
+
+  if (mode === 'protocol') {
+    renderProtocol(profile, finalList, warnings, medFlags, condFlags, targetFlags);
+  } else {
+    renderResultCards(finalList);
+    document.getElementById('protocol').classList.add('hidden');
+    const protocolSection = document.getElementById('protocol');
+    protocolSection.innerHTML = '';
+  }
 }
 
 document.getElementById('profile-form').addEventListener('submit', onSubmit);
@@ -421,6 +591,9 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   document.getElementById('status').innerText = '초기화 되었습니다.';
   document.getElementById('warnings').innerHTML = '';
   document.getElementById('results').innerHTML = '';
+  const report = document.getElementById('protocol');
+  report.innerHTML = '';
+  report.classList.add('hidden');
 });
 
 document.getElementById('results').addEventListener('click', (e) => {
@@ -430,6 +603,7 @@ document.getElementById('results').addEventListener('click', (e) => {
 });
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
+
 document.getElementById('detail-modal').addEventListener('click', (e) => {
   if (e.target.dataset && e.target.dataset.close) closeModal();
 });
@@ -437,3 +611,11 @@ document.getElementById('detail-modal').addEventListener('click', (e) => {
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeModal();
 });
+
+const modeInputs = document.querySelectorAll('input[name="mode"]');
+modeInputs.forEach((node) =>
+  node.addEventListener('change', () => {
+    const protocolVisible = document.querySelector('input[name="mode"]:checked').value === 'protocol';
+    document.getElementById('results').style.display = protocolVisible ? 'none' : 'block';
+  })
+);

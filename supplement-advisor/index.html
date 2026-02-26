@@ -11,10 +11,18 @@
     <header>
       <h1>영양제 추천 앱 (안전 우선)</h1>
       <p class="subtitle">
-        입력된 연령/체중/직업/성별/복용약을 바탕으로 상호작용 위험이 낮은 영양제를 제안합니다.
-        <strong>건강 상담이 아닌 정보성 도구</strong>이며, 최종 복용은 의사/약사와 상의해야 합니다.
+        개인 프로필 입력 기반으로 약물 충돌 위험을 낮추고, 일반 사용자도 바로 쓸 수 있는 형태로 구성했습니다.
+        <strong>건강 상담이 아닌 정보성 도구</strong>이며 최종 복용은 의사/약사와 상의하세요.
       </p>
     </header>
+
+    <section class="card">
+      <h2>진단 모드</h2>
+      <div class="segmented">
+        <label><input type="radio" name="mode" value="recommend" checked /> 추천 모드</label>
+        <label><input type="radio" name="mode" value="protocol" /> 역노화 프로토콜 모드</label>
+      </div>
+    </section>
 
     <section class="card">
       <h2>개인 정보</h2>
@@ -48,27 +56,48 @@
         </div>
 
         <div class="grid two">
-          <label>목표
+          <label>수면 1일 평균 (시간)
+            <input type="number" id="sleepHours" min="1" max="16" step="0.5" placeholder="예: 7.5" />
+          </label>
+          <label>운동 수준
+            <select id="activityLevel">
+              <option value="moderate">보통 (주 3회)</option>
+              <option value="high">높음 (헬스/고강도 포함)</option>
+              <option value="low">낮음</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="grid two">
+          <label>1순위 목표(1개만)
             <select id="goal">
               <option value="general">일반 건강/영양 보완</option>
               <option value="strength">근력/운동 성능</option>
               <option value="sleep">수면/회복</option>
               <option value="focus">집중/인지</option>
               <option value="immunity">면역/회복</option>
+              <option value="skin">피부/회복</option>
+              <option value="brain" selected>뇌/항노화 집중</option>
             </select>
           </label>
-          <label>성인질환/상태</label>
-          <input type="text" id="conditions" placeholder="예: 당뇨, 갑상선 질환(복수 입력은 쉼표)" />
+          <label>복용 약물</label>
+          <input id="meds" type="text" placeholder="예: Yaz, SSRI, Metformin" />
         </div>
 
-        <label>현재 복용 중인 약</label>
-        <textarea id="meds" rows="3" placeholder="예: Warfarin, Metformin, SSRI, Levothyroxine"></textarea>
+        <label>성인질환/상태(복수 입력은 쉼표)
+          <input id="conditions" type="text" placeholder="예: 불면증, 스트레스 과다, 하체 부종" />
+        </label>
 
-        <label>알레르기/섭취 제한</label>
-        <textarea id="allergies" rows="2" placeholder="예: 갑각류, 유제품, 카페인 과민"></textarea>
+        <label>원하는 항목(쉼표로 입력)
+          <input id="targets" type="text" placeholder="예: NMN, 레스베라트롤, 테아닌, 비타민D, 마그네슘, 시트룰린" />
+        </label>
+
+        <label>알레르기/섭취 제한
+          <textarea id="allergies" rows="2" placeholder="예: 갑각류, 유제품, 카페인 과민"></textarea>
+        </label>
 
         <div class="actions">
-          <button type="submit">추천 받기</button>
+          <button type="submit">분석 시작</button>
           <button type="button" id="reset-btn">초기화</button>
         </div>
       </form>
@@ -79,13 +108,14 @@
       <div id="status">아직 계산 전입니다.</div>
       <div id="warnings"></div>
       <div id="results" class="results"></div>
+      <div id="protocol" class="report hidden"></div>
     </section>
 
     <div id="detail-modal" class="modal" aria-hidden="true">
       <div class="modal__backdrop" data-close="1"></div>
       <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <header>
-          <h3 id="modal-title">상세 추천 정보</h3>
+          <h3 id="modal-title">자세히 보기</h3>
           <button id="modal-close" type="button" aria-label="닫기">×</button>
         </header>
         <div id="modal-body"></div>
@@ -95,11 +125,11 @@
     <section class="card">
       <h3>사용자 안전 규칙</h3>
       <ul>
-        <li>심각한 간·신장 질환, 항응고제, 항암 치료, 임신, 수유, 수술 예정인 경우 즉시 전문가 확인</li>
-        <li>복용량은 라벨 내 권장량 기준 (RDA UL 기반 안전 한계 기반)에서 시작</li>
-        <li>이 앱은 임상진단/처방이 아닌 교육용 보조도구입니다</li>
+        <li>항응고제, 항암 치료, 중증 신장·간질환, 임신/수유, 수술 예정 시 반드시 전문가 확인</li>
+        <li>새로운 영양제는 1개씩 시작하고 3~7일 적응을 확인한 뒤 추가</li>
+        <li>증상/우울·불면 악화·두통·심계항진이 생기면 중단하고 의료진 진료</li>
       </ul>
-      <p class="small">출처는 영양성분별 SCI/피어리뷰 문헌 요약 기반 메타데이터를 데이터 파일에 적재하도록 구성했습니다.</p>
+      <p class="small">출처는 영양성분별 SCI/피어리뷰 문헌 기반 메타데이터를 데이터 파일에 적재하도록 구성되어 있으며, 최종 판단은 임상 데이터 기반 의사와 함께 수행하세요.</p>
     </section>
   </div>
 
