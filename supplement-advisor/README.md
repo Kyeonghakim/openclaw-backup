@@ -1,22 +1,25 @@
 # 영양제 추천 앱 (안전 우선)
 
-## 개요
-사용자 입력(나이/성별/체중/직업/목표/약물/상태)에 따라
-- 약물/질환 충돌을 먼저 필터링
-- 역노화·뇌·수면·생활습관 중심의 **프로토콜형 리포트** 제공
-- iHerb에서 구매 가능한 실제 상품 검색 링크를 제시
-
-핵심 모드:
-- **추천 모드**: 핵심 영양제 후보 추천
-- **역노화/습관 프로토콜 모드(기본값)**: Safety Report / Custom Stack / Daily Timeline / Special Solution / Final Advice 출력
-
-원하는 성분(예: NMN, 레스베라트롤, 테아닌 등)을 입력하면 앱이 유사 계열로 매핑해 조정해서 제안합니다.
+## 핵심 기능
+- 영양제/충돌 필터 기반 맞춤 추천
+- **역노화/습관 프로토콜 모드**(기본값):
+  - Safety Report
+  - Custom Stack
+  - Daily Timeline (24h)
+  - Special Solution
+  - Final Advice
+- NMN/레스베라트롤/테아닌 등 사용자 입력 키워드 매핑
+- 진단 기록 스냅샷(로컬 브라우저 저장소)
+- 1페이지 PDF 리포트 생성(브라우저 인쇄 기능 기반)
 
 ## 실행
-브라우저에서 `index.html` 실행 또는 GitHub Pages 사용
+- 브라우저에서 `index.html` 실행
+- GitHub Pages: https://kyeonghakim.github.io/openclaw-backup/
 
-현재 배포 URL: https://kyeonghakim.github.io/openclaw-backup/
+## 기록/개인정보
+- 스냅샷은 현재 기기 브라우저 저장소에만 보관됩니다.
+- 민감 정보 입력 시 저장 전에 삭제 후 기록할 것을 권장합니다.
 
 ## 주의
-- 본 앱은 진단·처방이 아니라 교육용 도구입니다.
+- 본 앱은 진단·처방이 아니라 교육용 보조 도구입니다.
 - 임신/수유, 수술 예정, 중증 신장·간질환, 항응고 치료 중, 면역억제 치료 중에는 반드시 의료진 승인 후 사용하세요.

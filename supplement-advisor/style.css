@@ -165,3 +165,31 @@ th { background: #eef2ff; }
   background: #334155;
 }
 #modal-body ul { margin-top: 6px; }
+
+.snapshot-list {
+  display: grid;
+  gap: 8px;
+}
+.snapshot-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  background: #f8fafc;
+}
+.snapshot-item button {
+  width: auto;
+  margin-top: 6px;
+  padding: 6px 10px;
+}
+.snapshot-load {
+  background: #0f766e;
+  color: #fff;
+}
+
+@media print {
+  body { background: white; }
+  .container > section { page-break-inside: avoid; }
+  #detail-modal, #detail-modal * { display: none !important; }
+  .card { border: none; box-shadow: none; }
+  button { display: none; }
+}

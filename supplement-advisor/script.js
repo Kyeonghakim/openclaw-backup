@@ -393,6 +393,82 @@ function isInputAllowed(item, allergies) {
   return !allergies.some((a) => nameBlob.includes(a));
 }
 
+const reportStorageKey = 'supplement_protocol_reports_v1';
+let lastAnalysisState = null;
+
+function getSnapshotList() {
+  try {
+    return JSON.parse(localStorage.getItem(reportStorageKey) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveSnapshot(entry) {
+  const list = getSnapshotList();
+  list.unshift(entry);
+  const trimmed = list.slice(0, 6);
+  localStorage.setItem(reportStorageKey, JSON.stringify(trimmed));
+}
+
+function clearNode(id) {
+  const node = document.getElementById(id);
+  if (node) node.innerHTML = '';
+}
+
+function renderSnapshotList() {
+  const container = document.getElementById('snapshot-list');
+  if (!container) return;
+
+  const list = getSnapshotList();
+  if (!list.length) {
+    container.innerHTML = '<div>저장된 진단 기록이 없습니다.</div>';
+    return;
+  }
+
+  container.innerHTML = list
+    .map(
+      (item, idx) => `
+      <div class="snapshot-item">
+        <div><strong>${item.title}</strong> · ${item.time}</div>
+        <div class="small">모드: ${item.mode}, 목표: ${item.profile.goal}, 결과: ${item.mode === 'protocol' ? '프로토콜' : '추천'}</div>
+        <button type="button" class="snapshot-load" data-idx="${idx}">불러와 재분석</button>
+      </div>
+    `
+    )
+    .join('');
+}
+
+function serializeProfileFromForm() {
+  return {
+    age: Number(document.getElementById('age').value || 0),
+    gender: document.getElementById('gender').value,
+    weight: Number(document.getElementById('weight').value || 0),
+    occupation: document.getElementById('occupation').value,
+    goal: document.getElementById('goal').value,
+    sleepHours: Number(document.getElementById('sleepHours').value || 7.0),
+    activityLevel: document.getElementById('activityLevel').value,
+    meds: normalizeList(document.getElementById('meds').value),
+    conditions: normalizeList(document.getElementById('conditions').value),
+    targets: normalizeList(document.getElementById('targets').value),
+    allergies: normalizeList(document.getElementById('allergies').value)
+  };
+}
+
+function restoreProfile(profile) {
+  document.getElementById('age').value = profile.age || '';
+  document.getElementById('gender').value = profile.gender || '';
+  document.getElementById('weight').value = profile.weight || '';
+  document.getElementById('occupation').value = profile.occupation || 'sedentary';
+  document.getElementById('goal').value = profile.goal || 'general';
+  document.getElementById('sleepHours').value = profile.sleepHours || 7.0;
+  document.getElementById('activityLevel').value = profile.activityLevel || 'moderate';
+  document.getElementById('meds').value = (profile.meds || []).join(', ');
+  document.getElementById('conditions').value = (profile.conditions || []).join(', ');
+  document.getElementById('targets').value = (profile.targets || []).join(', ');
+  document.getElementById('allergies').value = (profile.allergies || []).join(', ');
+}
+
 function renderWarnings(list) {
   const w = document.getElementById('warnings');
   if (!list.length) {
@@ -570,24 +646,88 @@ function renderProtocol(profile, candidateDetails, warnings, medFlags, condFlags
       <ul>${warnings.length ? formatList(warnings) : '<li>현재 상태에서는 중대한 충돌 신호 없음. 그러나 신규 약물/증상 변화 시 즉시 재평가.</li>'}</ul>
     </div>
   `;
+
+  return {
+    title: `프로토콜 리포트 · ${profile.age}세 ${profile.gender}`,
+    safety: safetyLines,
+    stack: stackRows,
+    timeline: timelineRows,
+    special: specialEdema,
+    advice: '가장 중요한 것은 스택 수보다 일관성입니다. 첫 주는 1~2개 성분만 시작하고, 불면·심박·기분 변화를 기록하세요. 이 앱은 경향성 추천이며, 최종 용량·병용은 검사 기반으로 조정해야 합니다.',
+    warnings
+  };
+}
+
+function printCurrentReport(profile, mode, medFlags, condFlags, targetFlags, finalList, warnings, statusText) {
+  const data = mode === 'protocol'
+    ? renderProtocol(profile, finalList, warnings, medFlags, condFlags, targetFlags)
+    : {
+      title: `추천 모드 리포트 · ${profile.age}세 ${profile.gender}`,
+      safety: warnings,
+      stack: finalList.map((i) => `${i.name} ${i.dose}`),
+      timeline: [],
+      special: [],
+      advice: '추천모드 결과를 바탕으로 단계적으로 1~2개씩 추가하세요.',
+      warnings
+    };
+
+  const pageTitle = '보건 최적화 1페이지 리포트';
+  const meta = [
+    `성별: ${profile.gender}`,
+    `나이: ${profile.age}세`,
+    `체중: ${profile.weight}kg`,
+    `목표: ${profile.goal}`
+  ].join(' · ');
+
+  const html = `
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>${pageTitle}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; padding: 18px; color: #111827; }
+          .title { font-size: 20px; margin: 0 0 8px; }
+          .muted { color: #4b5563; font-size: 12px; margin-bottom: 14px; }
+          .section { border: 1px solid #d9e2ee; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+          h3 { margin: 0 0 8px; }
+          ul { margin: 0 0 0 18px; }
+          table { width:100%; border-collapse: collapse; font-size: 13px; }
+          th, td { border: 1px solid #d9e2ee; padding: 6px; text-align:left; }
+          th { background: #eef2ff; }
+          @page { size: A4; margin: 12mm; }
+        </style>
+      </head>
+      <body>
+        <h1 class="title">${pageTitle}</h1>
+        <div class="muted">${meta} · ${statusText}</div>
+        <div class="section"><h3>Safety Report</h3><ul>${formatList(mode === 'protocol' ? data.safety : warnings)}</ul></div>
+        <div class="section"><h3>Custom Stack</h3><ul>${mode === 'protocol'
+          ? data.stack
+          : finalList.map((i) => `<li>${i.name} · ${i.dose}</li>`).join('') || '<li>해당 없음</li>'}
+        </ul></div>
+        ${data.timeline ? `<div class="section"><h3>Daily Timeline (24h)</h3><table><thead><tr><th>시간</th><th>행동</th><th>목적</th></tr></thead><tbody>${typeof data.timeline === 'string' ? data.timeline : timelineRowsToHtml(finalList)}</tbody></table></div>` : ''}
+        <div class="section"><h3>Special Solution</h3><ul>${mode === 'protocol' ? data.special : '<li>일반 모드에서는 특이 솔루션이 생략됩니다.</li>'}</ul></div>
+        <div class="section"><h3>Final Advice</h3><p>${data.advice}</p></div>
+      </body>
+    </html>
+  `;
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  w.print();
+}
+
+function timelineRowsToHtml(finalList) {
+  if (!Array.isArray(finalList) || !finalList.length) return '<tr><td colspan="3">데이터 없음</td></tr>';
+  const profile = serializeProfileFromForm();
+  return protocolTimeline(profile).map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
 }
 
 function onSubmit(e) {
   e.preventDefault();
   const mode = document.querySelector('input[name="mode"]:checked')?.value || 'recommend';
-  const profile = {
-    age: Number(document.getElementById('age').value || 0),
-    gender: document.getElementById('gender').value,
-    weight: Number(document.getElementById('weight').value || 0),
-    occupation: document.getElementById('occupation').value,
-    goal: document.getElementById('goal').value,
-    sleepHours: Number(document.getElementById('sleepHours').value || 7.0),
-    activityLevel: document.getElementById('activityLevel').value,
-    meds: normalizeList(document.getElementById('meds').value),
-    conditions: normalizeList(document.getElementById('conditions').value),
-    targets: normalizeList(document.getElementById('targets').value),
-    allergies: normalizeList(document.getElementById('allergies').value)
-  };
+  const profile = serializeProfileFromForm();
 
   if (!profile.age || !profile.gender || !profile.weight) {
     alert('나이, 성별, 체중은 필수입니다.');
@@ -652,6 +792,19 @@ function onSubmit(e) {
     const protocolSection = document.getElementById('protocol');
     protocolSection.innerHTML = '';
   }
+
+  const snapshot = {
+    title: `${profile.goal}·${mode} · ${profile.age}세 ${profile.gender}`,
+    time: new Date().toLocaleString(),
+    mode,
+    profile,
+    selected: finalList.map((s) => ({ id: s.id, name: s.name, dose: s.dose, purpose: s.purpose })),
+    status: document.getElementById('status').innerText,
+    warnings: warnings.slice(0, 6)
+  };
+  lastAnalysisState = snapshot;
+  saveSnapshot(snapshot);
+  renderSnapshotList();
 }
 
 document.getElementById('profile-form').addEventListener('submit', onSubmit);
@@ -672,6 +825,82 @@ document.getElementById('results').addEventListener('click', (e) => {
   openModal(id);
 });
 
+document.getElementById('snapshot-list')?.addEventListener('click', (e) => {
+  const idx = e.target?.dataset?.idx;
+  if (!idx) return;
+  const list = getSnapshotList();
+  const item = list[Number(idx)];
+  if (!item?.profile) return;
+  restoreProfile(item.profile);
+  const form = document.getElementById('profile-form');
+  form.requestSubmit?.() || form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+});
+
+document.getElementById('snapshot-btn')?.addEventListener('click', () => {
+  if (!lastAnalysisState) {
+    alert('저장 가능한 결과가 없습니다. 먼저 "분석 시작"을 눌러 분석을 실행해 주세요.');
+    return;
+  }
+  saveSnapshot(lastAnalysisState);
+  renderSnapshotList();
+  alert('현재 진단 결과를 저장했습니다.');
+});
+
+document.getElementById('pdf-btn')?.addEventListener('click', () => {
+  const mode = document.querySelector('input[name="mode"]:checked')?.value || 'protocol';
+  const profile = serializeProfileFromForm();
+
+  if (!profile.age || !profile.gender || !profile.weight) {
+    alert('나이, 성별, 체중을 먼저 입력하고 분석을 실행해 주세요.');
+    return;
+  }
+
+  const medFlags = findConflicts(profile.meds, medAliases);
+  const condFlags = findConflicts(profile.conditions, conditionAliases);
+  const targetMatch = findTargets(profile.targets, targetAliases);
+
+  const candidateDetails = [];
+  const warnings = [];
+
+  supplements.forEach((item) => {
+    if (!isInputAllowed(item, profile.allergies)) {
+      warnings.push(`${item.name}는 알레르기/제한 사유로 제외했습니다.`);
+      return;
+    }
+
+    const score = relevanceScore(item, profile, targetMatch.matched);
+    if (score < 0) return;
+
+    const conf = isConflict(item, medFlags, condFlags);
+    if (conf.bad) {
+      const reasonText = [];
+      if (conf.reasons.meds.length) reasonText.push(`약물 충돌: ${conf.reasons.meds.join(', ')}`);
+      if (conf.reasons.conds.length) reasonText.push(`질환 충돌: ${conf.reasons.conds.join(', ')}`);
+      warnings.push(`${item.name}는 ${reasonText.join(' / ')} 때문에 제외됩니다.`);
+      return;
+    }
+
+    if (item.id === 'vitamin-d' && condFlags.includes('kidney_stone_risk')) {
+      warnings.push('비타민 D/칼슘 대사 이슈: 결석 위험이 있으므로 의료진 확인 후 우선도 조정');
+      return;
+    }
+
+    if (item.id === 'magnesium' && condFlags.includes('kidney_disease')) {
+      warnings.push('신장질환 동반 시 마그네슘은 고용량 중단 후 조정 권장');
+      return;
+    }
+
+    item.score = Math.max(0, Math.min(10, score));
+    candidateDetails.push(item);
+  });
+
+  candidateDetails.sort((a, b) => b.score - a.score);
+  const finalList = candidateDetails.slice(0, 6);
+  const statusText = `${profile.gender} · ${profile.age}세 · ${profile.weight}kg · ${profile.occupation} 직군 · 목표 ${profile.goal}`;
+
+  printCurrentReport(profile, mode, medFlags, condFlags, targetMatch.matched, finalList, warnings, statusText);
+});
+
 document.getElementById('modal-close').addEventListener('click', closeModal);
 
 document.getElementById('detail-modal').addEventListener('click', (e) => {
@@ -689,3 +918,9 @@ modeInputs.forEach((node) =>
     document.getElementById('results').style.display = protocolVisible ? 'none' : 'block';
   })
 );
+
+renderSnapshotList();
+(() => {
+  const protocolVisible = document.querySelector('input[name="mode"]:checked')?.value === 'protocol';
+  document.getElementById('results').style.display = protocolVisible ? 'none' : 'block';
+})();
