@@ -24,6 +24,9 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
+        with:
+          # 비활성 상태면 워크플로우가 첫 실행에도 Pages를 허용 상태로 바꿔줍니다.
+          enablement: true
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
