@@ -420,10 +420,215 @@ function formatList(arr) {
   return arr.map((x) => `<li>${x}</li>`).join('');
 }
 
+const llmDefaults = {
+  timeoutMs: 18000,
+  maxItems: 6
+};
+
+let latestResultItems = [];
+
+function setResultItems(items) {
+  latestResultItems = items;
+}
+
+function getLlmConfig() {
+  const useLlm = document.getElementById('llm-mode')?.checked;
+  const endpoint = (document.getElementById('llm-endpoint')?.value || '').trim();
+  const model = (document.getElementById('llm-model')?.value || '').trim();
+  return { useLlm, endpoint, model };
+}
+
+function normalizeLLMResponse(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item, index) => {
+      const idBase = (item.id || item.name || `llm-item-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const id = supplements.find((s) => s.id === idBase)?.id || `llm-${idBase}`;
+      const known = supplements.find((s) => s.id === idBase);
+
+      return {
+        ...known,
+        id,
+        name: item.name || (known ? known.name : 'LLM 추천 항목'),
+        dose: item.dose || (known ? known.dose : '개별 제품 라벨 참조'),
+        purpose: item.purpose || (known ? known.purpose : ''),
+        ingredients: Array.isArray(item.ingredients) ? item.ingredients : known?.ingredients || [],
+        evidence: Array.isArray(item.evidence) ? item.evidence : [`LLM 제안: ${item.reason || '근거 요약 없음'}`],
+        qualityFilters: Array.isArray(item.qualityFilters) ? item.qualityFilters : ['제품 라벨 성분/함량 확인', '기타 부원료 민감군 회피'],
+        products: {
+          primary: {
+            label: item.linkLabel || item.productLabel || (known?.products?.primary?.label || 'iHerb 검색 링크'),
+            link: item.link || item.productLink || (known?.products?.primary?.link || '#')
+          },
+          alternatives: Array.isArray(item.alternatives)
+            ? item.alternatives
+            : known?.products?.alternatives || []
+        },
+        score: typeof item.score === 'number' ? item.score : 7,
+        fromLlm: true,
+        llmReason: item.reason || item.justification || ''
+      };
+    })
+    .slice(0, llmDefaults.maxItems);
+}
+
+async function fetchLLMRecs(profile, medFlags, condFlags, targetFlags) {
+  const config = getLlmConfig();
+  if (!config.useLlm) return { ok: false, skipped: true };
+  if (!config.endpoint) return { ok: false, skipped: true, error: 'LLM 엔드포인트가 비어있습니다.' };
+
+  const payload = {
+    profile,
+    mode: document.querySelector('input[name="mode"]:checked')?.value || 'recommend',
+    medFlags,
+    condFlags,
+    targetFlags,
+    candidateCatalog: supplements.map((s) => ({
+      id: s.id,
+      name: s.name,
+      ingredients: s.ingredients,
+      purpose: s.purpose,
+      scoreBase: s.scoreBase,
+      targetGoals: s.targetGoals,
+      contraindications: s.contraindications
+    })),
+    safetyNotes: [
+      '반드시 신장/출혈/약물 충돌 체크는 앱 규칙을 따라 사전 필터링',
+      '이 결과는 교육용 조합 제안이며 임상 판단 대체 불가'
+    ],
+    requestedCount: llmDefaults.maxItems,
+    preferExplicitTargets: targetFlags
+  };
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), llmDefaults.timeoutMs);
+
+    const response = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return { ok: false, error: `LLM API 응답오류 (${response.status})` };
+    }
+
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        data = JSON.parse(match[0]);
+      } else {
+        return { ok: false, error: 'LLM 응답이 JSON 형식이 아닙니다.' };
+      }
+    }
+
+    // OpenAI-style 응답 지원
+    if (data?.choices && data.choices[0]?.message?.content) {
+      const contentText = data.choices[0].message.content;
+      try {
+        data = JSON.parse(contentText);
+      } catch {
+        // text-only fallback: extract recommendations from bullets
+        const items = contentText
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => /^[-*•]/.test(line))
+          .map((line) => ({ name: line.replace(/^[-*•]\s*/, ''), dose: '개별 라벨 참조' }));
+        data = { recommendations: items };
+      }
+    }
+
+    const rawList = Array.isArray(data?.recommendations)
+      ? data.recommendations
+      : [];
+    if (!rawList.length) {
+      return { ok: false, error: 'LLM 응답에 recommendations 항목이 없습니다.' };
+    }
+
+    const normalized = normalizeLLMResponse(rawList);
+    return { ok: true, items: normalized, warnings: Array.isArray(data?.safetyWarnings) ? data.safetyWarnings : [] };
+  } catch (err) {
+    return { ok: false, error: err?.message || 'LLM 호출 실패' };
+  }
+}
+
 function isInputAllowed(item, allergies) {
   if (!allergies.length) return true;
   const nameBlob = `${item.name} ${item.ingredients.join(' ')}`.toLowerCase();
   return !allergies.some((a) => nameBlob.includes(a));
+}
+
+function buildRuleBasedResult(profile) {
+  const medFlags = findConflicts(profile.meds, medAliases);
+  const condFlags = findConflicts(profile.conditions, conditionAliases);
+  const targetMatch = findTargets(profile.targets, targetAliases);
+  const explicitMatch = findExplicitSupplementTargets(profile.targets);
+  const targetFlags = [...new Set([...targetMatch.matched, ...explicitMatch.matched])];
+
+  const candidateDetails = [];
+  const warnings = [];
+
+  if (explicitMatch.matched.length) {
+    warnings.push(`요청하신 영양제 키워드 중 다음 항목을 직접 반영해 우선순위를 높였습니다: ${explicitMatch.matched.join(', ')}.`);
+  }
+
+  if (!targetMatch.matched.length && profile.targets.length > 0) {
+    warnings.push(`요청 항목 중 직접 매칭된 영양제가 적습니다: ${targetMatch.unknown.join(', ')}. 이 경우는 하단 '역노화/습관' 조언을 참고해 대체군으로 추천합니다.`);
+  }
+
+  supplements.forEach((item) => {
+    if (!isInputAllowed(item, profile.allergies)) {
+      warnings.push(`${item.name}는 알레르기/제한 사유로 제외했습니다.`);
+      return;
+    }
+
+    const score = relevanceScore(item, profile, targetFlags);
+    if (score < 0) return;
+
+    const conf = isConflict(item, medFlags, condFlags);
+    if (conf.bad) {
+      const reasonText = [];
+      if (conf.reasons.meds.length) reasonText.push(`약물 충돌: ${conf.reasons.meds.join(', ')}`);
+      if (conf.reasons.conds.length) reasonText.push(`질환 충돌: ${conf.reasons.conds.join(', ')}`);
+      warnings.push(`${item.name}는 ${reasonText.join(' / ')} 때문에 제외됩니다.`);
+      return;
+    }
+
+    if (item.id === 'vitamin-d' && condFlags.includes('kidney_stone_risk')) {
+      warnings.push('비타민 D/칼슘 대사 이슈: 결석 위험이 있으므로 의료진 확인 후 우선도 조정');
+      return;
+    }
+
+    if (item.id === 'magnesium' && condFlags.includes('kidney_disease')) {
+      warnings.push('신장질환 동반 시 마그네슘은 고용량 중단 후 조정 권장');
+      return;
+    }
+
+    candidateDetails.push({
+      ...item,
+      score: Math.max(0, Math.min(10, score))
+    });
+  });
+
+  candidateDetails.sort((a, b) => b.score - a.score);
+  const finalList = candidateDetails.slice(0, llmDefaults.maxItems);
+
+  return {
+    medFlags,
+    condFlags,
+    targetFlags,
+    targetMatch,
+    explicitMatch,
+    warnings: [...new Set(warnings)],
+    finalList
+  };
 }
 
 const reportStorageKey = 'supplement_protocol_reports_v1';
@@ -464,7 +669,7 @@ function renderSnapshotList() {
       (item, idx) => `
       <div class="snapshot-item">
         <div><strong>${item.title}</strong> · ${item.time}</div>
-        <div class="small">모드: ${item.mode}, 목표: ${item.profile.goal}, 결과: ${item.mode === 'protocol' ? '프로토콜' : '추천'}</div>
+        <div class="small">모드: ${item.mode}, 목표: ${item.profile.goal}, 결과: ${item.mode === 'protocol' ? '프로토콜' : '추천'}${item.llmMode ? ' / LLM' : ''}</div>
         <button type="button" class="snapshot-load" data-idx="${idx}">불러와 재분석</button>
       </div>
     `
@@ -515,6 +720,7 @@ function renderResultCards(items) {
   const container = document.getElementById('results');
   const protocol = document.getElementById('protocol');
   protocol.classList.add('hidden');
+  setResultItems(items);
 
   if (!items.length) {
     container.innerHTML = '<div class="item">현재 입력 조건에서 안전-우선 추천 후보가 적습니다.</div>';
@@ -526,12 +732,13 @@ function renderResultCards(items) {
     <div class="item" data-id="${item.id}">
       <h3>${item.name}</h3>
       <div class="meta">
-        <span class="badge">권장량: ${item.dose}</span>
-        <span class="badge">안전성 점수: ${item.score.toFixed(1)}/10</span>
+        <span class="badge">권장량: ${item.dose || '미지정'}</span>
+        <span class="badge">안전성 점수: ${(typeof item.score === 'number' ? item.score : 7).toFixed(1)}/10</span>
       </div>
-      <div><strong>핵심 성분:</strong> ${item.ingredients.join(', ')}</div>
-      <div><strong>요약:</strong> ${item.purpose}</div>
+      <div><strong>핵심 성분:</strong> ${(item.ingredients || []).join(', ')}</div>
+      <div><strong>요약:</strong> ${item.purpose || '요약 보류'}</div>
       <button class="detail-btn" type="button" data-open="${item.id}">자세히 보기</button>
+      ${item.fromLlm && item.llmReason ? `<div class="small">LLM 근거: ${item.llmReason}</div>` : ''}
     </div>
   `
     )
@@ -539,23 +746,26 @@ function renderResultCards(items) {
 }
 
 function openModal(itemId) {
-  const item = supplements.find((x) => x.id === itemId);
+  const item = latestResultItems.find((x) => x.id === itemId) || supplements.find((x) => x.id === itemId);
   if (!item) return;
   const modal = document.getElementById('detail-modal');
   const body = document.getElementById('modal-body');
-  const alternativesHtml = (item.products.alternatives || [])
+  const alternativesHtml = (item.products?.alternatives || [])
     .map((p) => `<li><a href="${p.link}" target="_blank" rel="noopener">${p.label}</a></li>`)
     .join('');
+  const evidence = Array.isArray(item.evidence) && item.evidence.length ? item.evidence : ['기록된 근거가 없습니다.'];
+  const qualityFilters = Array.isArray(item.qualityFilters) && item.qualityFilters.length ? item.qualityFilters : ['라벨/원산지 확인'];
 
   body.innerHTML = `
     <div>
       <div><strong>${item.name}</strong></div>
-      <div class="meta" style="margin-top: 6px;"><span class="badge">권장량: ${item.dose}</span> <span class="badge">안전성 점수: ${item.score.toFixed(1)}/10</span></div>
-      <div><strong>목적:</strong> ${item.purpose}</div>
-      <div><strong>근거:</strong><ul>${formatList(item.evidence)}</ul></div>
-      <div><strong>품질 기준:</strong> ${item.qualityFilters.join(' · ')}</div>
-      <div><strong>우선 추천:</strong> <a href="${item.products.primary.link}" target="_blank" rel="noopener">${item.products.primary.label}</a></div>
+      <div class="meta" style="margin-top: 6px;"><span class="badge">권장량: ${item.dose || '미지정'}</span> <span class="badge">안전성 점수: ${(typeof item.score === 'number' ? item.score : 7).toFixed(1)}/10</span></div>
+      <div><strong>목적:</strong> ${item.purpose || '요약 보류'}</div>
+      <div><strong>근거:</strong><ul>${formatList(evidence)}</ul></div>
+      <div><strong>품질 기준:</strong> ${qualityFilters.join(' · ')}</div>
+      <div><strong>우선 추천:</strong> <a href="${item.products?.primary?.link || '#'}" target="_blank" rel="noopener">${item.products?.primary?.label || '상품 링크 준비중'}</a></div>
       <div><strong>재고 대체:</strong><ul>${alternativesHtml}</ul></div>
+      ${item.llmReason ? `<p class="small">LLM 근거 메모: ${item.llmReason}</p>` : ''}
       <p class="small">※ iHerb 재고는 시기에 따라 변동될 수 있어 대체 항목 동시 확인 권장.</p>
     </div>
   `;
@@ -757,7 +967,7 @@ function timelineRowsToHtml(finalList) {
   return protocolTimeline(profile).map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
 }
 
-function onSubmit(e) {
+async function onSubmit(e) {
   e.preventDefault();
   const mode = document.querySelector('input[name="mode"]:checked')?.value || 'recommend';
   const profile = serializeProfileFromForm();
@@ -767,63 +977,38 @@ function onSubmit(e) {
     return;
   }
 
-  const medFlags = findConflicts(profile.meds, medAliases);
-  const condFlags = findConflicts(profile.conditions, conditionAliases);
-  const targetMatch = findTargets(profile.targets, targetAliases);
-  const explicitMatch = findExplicitSupplementTargets(profile.targets);
-  const targetFlags = [...new Set([...targetMatch.matched, ...explicitMatch.matched])];
+  const base = buildRuleBasedResult(profile);
+  let finalList = [...base.finalList];
+  const warnings = [...base.warnings];
 
-  const candidateDetails = [];
-  const warnings = [];
-
-  if (explicitMatch.matched.length) {
-    warnings.push(`요청하신 영양제 키워드 중 다음 항목을 직접 반영해 우선순위를 높였습니다: ${explicitMatch.matched.join(', ')}.`);
+  const cfg = getLlmConfig();
+  if (cfg.useLlm) {
+    const llm = await fetchLLMRecs(profile, base.medFlags, base.condFlags, base.targetFlags);
+    if (llm.ok && Array.isArray(llm.items) && llm.items.length) {
+      const byId = new Set(finalList.map((x) => x.id));
+      const merged = [...llm.items];
+      finalList.forEach((item) => {
+        if (!byId.has(item.id) && merged.length < llmDefaults.maxItems) {
+          merged.push(item);
+          byId.add(item.id);
+        }
+      });
+      finalList = merged.slice(0, llmDefaults.maxItems);
+      if (Array.isArray(llm.warnings) && llm.warnings.length) {
+        warnings.push(...llm.warnings.map((x) => `LLM: ${x}`));
+      }
+      warnings.push('LLM 기반 결과를 반영해 순위를 재정렬했습니다.');
+    } else {
+      warnings.push(`LLM 동작 안함: ${llm.error || '구성 상태 확인 후 규칙 기반으로 전환합니다.'}`);
+    }
   }
 
-  if (!targetMatch.matched.length && profile.targets.length > 0) {
-    warnings.push(`요청 항목 중 직접 매칭된 영양제가 적습니다: ${targetMatch.unknown.join(', ')}. 이 경우는 하단 '역노화/습관' 조언을 참고해 대체군으로 추천합니다.`);
-  }
-
-  supplements.forEach((item) => {
-    if (!isInputAllowed(item, profile.allergies)) {
-      warnings.push(`${item.name}는 알레르기/제한 사유로 제외했습니다.`);
-      return;
-    }
-
-    const score = relevanceScore(item, profile, targetFlags);
-    if (score < 0) return;
-
-    const conf = isConflict(item, medFlags, condFlags);
-    if (conf.bad) {
-      const reasonText = [];
-      if (conf.reasons.meds.length) reasonText.push(`약물 충돌: ${conf.reasons.meds.join(', ')}`);
-      if (conf.reasons.conds.length) reasonText.push(`질환 충돌: ${conf.reasons.conds.join(', ')}`);
-      warnings.push(`${item.name}는 ${reasonText.join(' / ')} 때문에 제외됩니다.`);
-      return;
-    }
-
-    if (item.id === 'vitamin-d' && condFlags.includes('kidney_stone_risk')) {
-      warnings.push('비타민 D/칼슘 대사 이슈: 결석 위험이 있으므로 의료진 확인 후 우선도 조정');
-      return;
-    }
-
-    if (item.id === 'magnesium' && condFlags.includes('kidney_disease')) {
-      warnings.push('신장질환 동반 시 마그네슘은 고용량 중단 후 조정 권장');
-      return;
-    }
-
-    item.score = Math.max(0, Math.min(10, score));
-    candidateDetails.push(item);
-  });
-
-  candidateDetails.sort((a, b) => b.score - a.score);
-  const finalList = candidateDetails.slice(0, 6);
-
+  const uniqueWarnings = [...new Set(warnings)];
   document.getElementById('status').innerText = `${profile.gender} · ${profile.age}세 · ${profile.weight}kg · ${profile.occupation} 직군 · 목표 ${profile.goal}`;
-  renderWarnings(warnings);
+  renderWarnings(uniqueWarnings);
 
   if (mode === 'protocol') {
-    renderProtocol(profile, finalList, warnings, medFlags, condFlags, targetFlags);
+    renderProtocol(profile, finalList, uniqueWarnings, base.medFlags, base.condFlags, base.targetFlags);
   } else {
     renderResultCards(finalList);
     document.getElementById('protocol').classList.add('hidden');
@@ -831,16 +1016,22 @@ function onSubmit(e) {
     protocolSection.innerHTML = '';
   }
 
+  setResultItems(finalList);
+
   const snapshot = {
     title: `${profile.goal}·${mode} · ${profile.age}세 ${profile.gender}`,
     time: new Date().toLocaleString(),
     mode,
     profile,
-    selected: finalList.map((s) => ({ id: s.id, name: s.name, dose: s.dose, purpose: s.purpose })),
+    selected: finalList.map((s) => ({ id: s.id, name: s.name, dose: s.dose, purpose: s.purpose, fromLlm: !!s.fromLlm })),
     status: document.getElementById('status').innerText,
-    warnings: warnings.slice(0, 6)
+    warnings: uniqueWarnings.slice(0, 6),
+    medFlags: base.medFlags,
+    condFlags: base.condFlags,
+    targetFlags: base.targetFlags,
+    llmMode: !!cfg.useLlm
   };
-  lastAnalysisState = snapshot;
+  lastAnalysisState = { ...snapshot, recommendations: finalList };
   saveSnapshot(snapshot);
   renderSnapshotList();
 }
@@ -855,6 +1046,8 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   const report = document.getElementById('protocol');
   report.innerHTML = '';
   report.classList.add('hidden');
+  lastAnalysisState = null;
+  setResultItems([]);
 });
 
 document.getElementById('results').addEventListener('click', (e) => {
@@ -863,6 +1056,12 @@ document.getElementById('results').addEventListener('click', (e) => {
   openModal(id);
 });
 
+document.getElementById('llm-mode')?.addEventListener('change', (e) => {
+  const checked = e.target.checked;
+  document.getElementById('llm-config').style.opacity = checked ? '1' : '0.45';
+  document.getElementById('llm-endpoint').disabled = !checked;
+  document.getElementById('llm-model').disabled = !checked;
+});
 document.getElementById('snapshot-list')?.addEventListener('click', (e) => {
   const idx = e.target?.dataset?.idx;
   if (!idx) return;
@@ -879,64 +1078,26 @@ document.getElementById('snapshot-btn')?.addEventListener('click', () => {
     alert('저장 가능한 결과가 없습니다. 먼저 "분석 시작"을 눌러 분석을 실행해 주세요.');
     return;
   }
-  saveSnapshot(lastAnalysisState);
+  saveSnapshot({
+    ...lastAnalysisState,
+    time: new Date().toLocaleString()
+  });
   renderSnapshotList();
   alert('현재 진단 결과를 저장했습니다.');
 });
 
 document.getElementById('pdf-btn')?.addEventListener('click', () => {
   const mode = document.querySelector('input[name="mode"]:checked')?.value || 'protocol';
-  const profile = serializeProfileFromForm();
 
-  if (!profile.age || !profile.gender || !profile.weight) {
-    alert('나이, 성별, 체중을 먼저 입력하고 분석을 실행해 주세요.');
+  if (!lastAnalysisState || !lastAnalysisState.profile) {
+    alert('보고서가 없습니다. 먼저 "분석 시작"을 눌러 최신 추천을 먼저 만들어 주세요.');
     return;
   }
 
-  const medFlags = findConflicts(profile.meds, medAliases);
-  const condFlags = findConflicts(profile.conditions, conditionAliases);
-  const targetMatch = findTargets(profile.targets, targetAliases);
-
-  const candidateDetails = [];
-  const warnings = [];
-
-  supplements.forEach((item) => {
-    if (!isInputAllowed(item, profile.allergies)) {
-      warnings.push(`${item.name}는 알레르기/제한 사유로 제외했습니다.`);
-      return;
-    }
-
-    const score = relevanceScore(item, profile, targetMatch.matched);
-    if (score < 0) return;
-
-    const conf = isConflict(item, medFlags, condFlags);
-    if (conf.bad) {
-      const reasonText = [];
-      if (conf.reasons.meds.length) reasonText.push(`약물 충돌: ${conf.reasons.meds.join(', ')}`);
-      if (conf.reasons.conds.length) reasonText.push(`질환 충돌: ${conf.reasons.conds.join(', ')}`);
-      warnings.push(`${item.name}는 ${reasonText.join(' / ')} 때문에 제외됩니다.`);
-      return;
-    }
-
-    if (item.id === 'vitamin-d' && condFlags.includes('kidney_stone_risk')) {
-      warnings.push('비타민 D/칼슘 대사 이슈: 결석 위험이 있으므로 의료진 확인 후 우선도 조정');
-      return;
-    }
-
-    if (item.id === 'magnesium' && condFlags.includes('kidney_disease')) {
-      warnings.push('신장질환 동반 시 마그네슘은 고용량 중단 후 조정 권장');
-      return;
-    }
-
-    item.score = Math.max(0, Math.min(10, score));
-    candidateDetails.push(item);
-  });
-
-  candidateDetails.sort((a, b) => b.score - a.score);
-  const finalList = candidateDetails.slice(0, 6);
+  const profile = lastAnalysisState.profile;
+  const finalList = (lastAnalysisState.recommendations || []).slice(0, llmDefaults.maxItems);
   const statusText = `${profile.gender} · ${profile.age}세 · ${profile.weight}kg · ${profile.occupation} 직군 · 목표 ${profile.goal}`;
-
-  printCurrentReport(profile, mode, medFlags, condFlags, targetMatch.matched, finalList, warnings, statusText);
+  printCurrentReport(profile, mode, lastAnalysisState.medFlags || findConflicts(profile.meds, medAliases), lastAnalysisState.condFlags || findConflicts(profile.conditions, conditionAliases), lastAnalysisState.targetFlags || [], finalList, lastAnalysisState.warnings || [], statusText);
 });
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -961,4 +1122,10 @@ renderSnapshotList();
 (() => {
   const protocolVisible = document.querySelector('input[name="mode"]:checked')?.value === 'protocol';
   document.getElementById('results').style.display = protocolVisible ? 'none' : 'block';
+  const llmMode = document.getElementById('llm-mode');
+  if (llmMode) {
+    document.getElementById('llm-config').style.opacity = llmMode.checked ? '1' : '0.45';
+    document.getElementById('llm-endpoint').disabled = !llmMode.checked;
+    document.getElementById('llm-model').disabled = !llmMode.checked;
+  }
 })();

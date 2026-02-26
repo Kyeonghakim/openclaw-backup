@@ -23,6 +23,21 @@
         <label><input type="radio" name="mode" value="protocol" checked /> 역노화/습관 프로토콜 모드</label>
       </div>
       <p class="small" style="margin-top:4px;">입력한 영양제 단어(예: 마그네슘, 오메가3, 비타민C)는 먼저 직접 매칭해 우선 추천합니다. 매칭되지 않으면 대체군으로 설명하고, 매칭/대체 여부는 경고창에서 함께 표시됩니다.</p>
+
+      <label class="small">
+        <input id="llm-mode" type="checkbox" /> LLM 기반 추천 사용 (직접 운영 엔드포인트 필요)
+      </label>
+      <div id="llm-config" class="grid two" style="margin-top:8px; align-items:start;">
+        <label>
+          LLM 엔드포인트(URL)
+          <input id="llm-endpoint" type="url" placeholder="예: https://your-backend.example.com/recommend" />
+        </label>
+        <label>
+          모델명(선택)
+          <input id="llm-model" type="text" placeholder="예: gpt-4o-mini" />
+        </label>
+      </div>
+      <p class="small">LLM은 안전성 필터는 룰(약물·질환 충돌) 뒤에서 조합 후보를 재정렬합니다. 엔드포인트는 JSON 요청을 받고 JSON 응답을 반환해야 합니다.</p>
     </section>
 
     <section class="card">
